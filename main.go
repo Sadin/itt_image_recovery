@@ -17,10 +17,12 @@ func main() {
 	host, err := os.Hostname()
 	check(err)
 
-	oldName := "test.txt"
-	newName := "testing.txt"
-	err = os.Rename(oldName, newName)
-	check(err)
+	/*
+		oldName := "test.txt"
+		newName := "testing.txt"
+		err = os.Rename(oldName, newName)
+		check(err)
+	*/
 
 	// print user/system info to console for awareness
 	info := fmt.Sprintf("Running as: %s (id: %s)\nHostname: %s \n\n", user.Username, user.Uid, host)
@@ -40,7 +42,7 @@ func main() {
 		// build path string
 		path := fmt.Sprintf("%s/OriginalImages.XVA", entry.Name())
 
-		if _, err := os.Stat(path); os.IsNotExist(err) {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
 			needsaction = true
 		}
 
@@ -52,6 +54,15 @@ func main() {
 			fmt.Println("Switching working directory...")
 			err = os.Chdir(entry.Name())
 			check(err)
+
+			// scan OriginalImages dir for slice of file objects
+			imgs, err := ioutil.ReadDir("OriginalImages.XVA")
+			check(err)
+
+			// loop through OriginalImages slice
+			for _, entry := range imgs {
+				fmt.Println("\t" + entry.Name())
+			}
 
 			// return
 			err = os.Chdir("..")
