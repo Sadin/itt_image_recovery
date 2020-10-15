@@ -62,6 +62,8 @@ func main() {
 
 				// rename
 				fileRename(entry.Name())
+				fmt.Println("\t\tSuccess")
+
 				err = os.Chdir("..")
 				check(err)
 			}
@@ -88,8 +90,6 @@ func fileRename(name string) (string, error) {
 
 	err := os.Rename(name, newName)
 	check(err)
-
-	fmt.Println("\t\tSuccess")
 
 	return newName, fmt.Errorf("Error: renaming %s failed", name)
 }
