@@ -10,6 +10,7 @@ import (
 func main() {
 	fmt.Println("Starting image recovery...")
 
+	// fetch user and host info
 	user, err := user.Current()
 	if err != nil {
 		log.Fatal(err)
