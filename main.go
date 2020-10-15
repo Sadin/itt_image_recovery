@@ -6,9 +6,11 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"strings"
 )
 
 func main() {
+
 	fmt.Println("Starting image recovery...")
 
 	// fetch user and host info
@@ -61,7 +63,14 @@ func main() {
 
 			// loop through OriginalImages slice
 			for _, entry := range imgs {
-				fmt.Println("\t" + entry.Name())
+				fmt.Printf("\t%s found...\n", entry.Name())
+				err = os.Chdir("OriginalImages.XVA")
+				check(err)
+
+				// rename
+				fileRename(entry.Name())
+				err = os.Chdir("..")
+				check(err)
 			}
 
 			// return
@@ -75,4 +84,19 @@ func check(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func fileRename(name string) (string, error) {
+
+	// fix filename, and perform rename + move
+	newName := fmt.Sprintf("..\\%s", strings.Replace(name, " Original", "", -1))
+
+	fmt.Printf("\t\tRenaming & moving %s --> %s\n", name, newName)
+
+	err := os.Rename(name, newName)
+	check(err)
+
+	fmt.Println("\t\tSuccess")
+
+	return newName, fmt.Errorf("Error: renaming %s failed", name)
 }
