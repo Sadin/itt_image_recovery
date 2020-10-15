@@ -62,10 +62,20 @@ func main() {
 
 				// rename
 				fileRename(entry.Name())
-				fmt.Println("\t\tSuccess")
 
 				err = os.Chdir("..")
 				check(err)
+			}
+
+			// recheck after files are moved
+			imgs, err = ioutil.ReadDir("OriginalImages.XVA")
+			check(err)
+
+			if len(imgs) == 0 {
+				fmt.Println("\tOriginalImages.XVA dir empty, removing...")
+				err = os.Remove("OriginalImages.XVA")
+				check(err)
+				fmt.Println("\tSuccess")
 			}
 
 			// return
@@ -82,14 +92,17 @@ func check(err error) {
 }
 
 func fileRename(name string) (string, error) {
-
 	// fix filename, and perform rename + move
-	newName := fmt.Sprintf("..\\%s", strings.Replace(name, " Original", "", -1))
+	if strings.Contains(name, "Original") {
+		newName := fmt.Sprintf("..\\%s", strings.Replace(name, " Original", "", -1))
 
-	fmt.Printf("\t\tRenaming & moving %s --> %s\n", name, newName)
+		fmt.Printf("\t\tRenaming & moving %s --> %s\n", name, newName)
+		err := os.Rename(name, newName)
+		check(err)
+		fmt.Println("\t\tSuccess")
 
-	err := os.Rename(name, newName)
-	check(err)
-
-	return newName, fmt.Errorf("Error: renaming %s failed", name)
+		return newName, fmt.Errorf("Error: renaming %s failed", name)
+	} else {
+		return name, nil
+	}
 }
