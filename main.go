@@ -12,6 +12,10 @@ import (
 var (
 	// RecoveryDir directory containing images for recovery
 	RecoveryDir = "OriginalImages.XVA"
+
+	WarningLogger *log.Logger
+	InfoLogger    *log.Logger
+	ErrorLogger   *log.Logger
 )
 
 func main() {
