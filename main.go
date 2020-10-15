@@ -9,6 +9,11 @@ import (
 	"strings"
 )
 
+var (
+	// RecoveryDir directory containing images for recovery
+	RecoveryDir = "OriginalImages.XVA"
+)
+
 func main() {
 
 	fmt.Println("Starting image recovery...")
@@ -35,7 +40,7 @@ func main() {
 		needsaction := false
 
 		// build path string
-		path := fmt.Sprintf("%s/OriginalImages.XVA", entry.Name())
+		path := fmt.Sprintf("%s/%s", entry.Name(), RecoveryDir)
 
 		if _, err := os.Stat(path); !os.IsNotExist(err) {
 			needsaction = true
@@ -51,31 +56,36 @@ func main() {
 			check(err)
 
 			// scan OriginalImages dir for slice of file objects
-			imgs, err := ioutil.ReadDir("OriginalImages.XVA")
+			imgs, err := ioutil.ReadDir(RecoveryDir)
 			check(err)
 
-			// loop through OriginalImages slice
-			for _, entry := range imgs {
-				fmt.Printf("\t%s found...\n", entry.Name())
-				err = os.Chdir("OriginalImages.XVA")
+			if len(imgs) > 0 {
+				err = os.Chdir(RecoveryDir)
 				check(err)
 
-				// rename
-				fileRename(entry.Name())
+				// loop through OriginalImages slice
+				for _, entry := range imgs {
+					fmt.Printf("\t%s found...\n", entry.Name())
+
+					// rename
+					if strings.Contains(entry.Name(), "Original") {
+						fileRename(entry.Name())
+					}
+
+				}
 
 				err = os.Chdir("..")
 				check(err)
-			}
 
-			// recheck after files are moved
-			imgs, err = ioutil.ReadDir("OriginalImages.XVA")
-			check(err)
-
-			if len(imgs) == 0 {
-				fmt.Println("\tOriginalImages.XVA dir empty, removing...")
-				err = os.Remove("OriginalImages.XVA")
+				// recheck after files are moved
+				imgs, err = ioutil.ReadDir(RecoveryDir)
 				check(err)
-				fmt.Println("\tSuccess")
+				if len(imgs) == 0 {
+					removeDir(RecoveryDir)
+				}
+
+			} else {
+				removeDir(RecoveryDir)
 			}
 
 			// return
@@ -93,16 +103,18 @@ func check(err error) {
 
 func fileRename(name string) (string, error) {
 	// fix filename, and perform rename + move
-	if strings.Contains(name, "Original") {
-		newName := fmt.Sprintf("..\\%s", strings.Replace(name, " Original", "", -1))
+	newName := fmt.Sprintf("..\\%s", strings.Replace(name, " Original", "", -1))
 
-		fmt.Printf("\t\tRenaming & moving %s --> %s\n", name, newName)
-		err := os.Rename(name, newName)
-		check(err)
-		fmt.Println("\t\tSuccess")
+	fmt.Printf("\t\tRenaming & moving %s --> %s\n", name, newName)
+	err := os.Rename(name, newName)
+	check(err)
+	fmt.Println("\t\tSuccess")
 
-		return newName, fmt.Errorf("Error: renaming %s failed", name)
-	} else {
-		return name, nil
-	}
+	return newName, fmt.Errorf("Error: renaming %s failed", name)
+}
+
+func removeDir(name string) (string, error) {
+	fmt.Printf("\t%s dir empty, removing...\n", name)
+	err := os.Remove(name)
+	return "Success", err
 }
