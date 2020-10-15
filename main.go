@@ -107,7 +107,7 @@ func check(err error) {
 
 func fileRename(name string) (string, error) {
 	// fix filename, and perform rename + move
-	newName := fmt.Sprintf("..\\%s", strings.Replace(name, " Original", "", -1))
+	newName := fmt.Sprintf("..\\%s", strings.ReplaceAll(name, " Original", ""))
 
 	fmt.Printf("\t\tRenaming & moving %s --> %s\n", name, newName)
 	err := os.Rename(name, newName)
