@@ -19,13 +19,6 @@ func main() {
 	host, err := os.Hostname()
 	check(err)
 
-	/*
-		oldName := "test.txt"
-		newName := "testing.txt"
-		err = os.Rename(oldName, newName)
-		check(err)
-	*/
-
 	// print user/system info to console for awareness
 	info := fmt.Sprintf("Running as: %s (id: %s)\nHostname: %s \n\n", user.Username, user.Uid, host)
 	fmt.Println(info)
