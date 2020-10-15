@@ -17,6 +17,11 @@ func main() {
 	host, err := os.Hostname()
 	check(err)
 
+	oldName := "test.txt"
+	newName := "testing.txt"
+	err = os.Rename(oldName, newName)
+	check(err)
+
 	// print user/system info to console for awareness
 	info := fmt.Sprintf("Running as: %s (id: %s)\nHostname: %s \n\n", user.Username, user.Uid, host)
 	fmt.Println(info)
@@ -30,26 +35,29 @@ func main() {
 	fmt.Println("Listing subdirectories... ")
 	// loop over slice of patient image directory and do work
 	for _, entry := range subdir {
-		// drill down into patient directory
-		err = os.Chdir(entry.Name())
-		check(err)
-		// no recovery images unless proven otherwise
-		y := false
-		if _, err := os.Stat("OriginalImages.XVA"); os.IsNotExist(err) {
-			y = true
+		needsaction := false
+
+		// build path string
+		path := fmt.Sprintf("%s/OriginalImages.XVA", entry.Name())
+
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			needsaction = true
 		}
-		output := fmt.Sprintf("Found %s | contains recovery images: %v", entry.Name(), y)
+
+		output := fmt.Sprintf("Found %s | contains recovery images: %v", entry.Name(), needsaction)
 		fmt.Println(output)
 
-		// return up to
-		err = os.Chdir("..")
-		check(err)
-	}
+		if needsaction == true {
+			// enter patient directory
+			fmt.Println("Switching working directory...")
+			err = os.Chdir(entry.Name())
+			check(err)
 
-	oldName := "test.txt"
-	newName := "testing.txt"
-	err = os.Rename(oldName, newName)
-	check(err)
+			// return
+			err = os.Chdir("..")
+			check(err)
+		}
+	}
 }
 
 func check(err error) {
