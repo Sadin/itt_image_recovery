@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -23,7 +24,13 @@ var (
 
 func main() {
 
+	path, err := os.Getwd()
+	check(err)
+	wordPtr := flag.String("path", path, "desired file path where program will execute")
+
 	fmt.Println("Starting image recovery...")
+
+	flag.Parse()
 
 	// fetch user and host info
 	user, err := user.Current()
@@ -32,7 +39,7 @@ func main() {
 	check(err)
 
 	// print user/system info to console for awareness
-	info := fmt.Sprintf("Running as: %s (id: %s)\nHostname: %s \n\n", user.Username, user.Uid, host)
+	info := fmt.Sprintf("Running as: \t%s (id: %s)\nHostname: \t%s\nExecuting in: \t'%s'\n", user.Username, user.Uid, host, *wordPtr)
 	fmt.Println(info)
 
 	// time tracking
