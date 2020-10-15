@@ -3,7 +3,7 @@
 * program prints user/env info at runtime
 
 ### 10/15/20
-* program only moves immage files from sub-directory containing "Original"
+* program only moves image files from sub-directory containing "Original"
 * program cleans up empty sub-directories it comes accross
 * efficiency increased
     - program no longer enters and exits sub-directory on a loop
