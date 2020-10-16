@@ -46,10 +46,10 @@ func main() {
 	defer execTime(time.Now())
 
 	// obtain slice of image directory
-	subdir, err := ioutil.ReadDir("imagefiles")
+	subdir, err := ioutil.ReadDir(*wordPtr)
 	check(err)
 	// drill down into image directory
-	err = os.Chdir("imagefiles")
+	err = os.Chdir(*wordPtr)
 	check(err)
 	fmt.Println("Listing subdirectories... ")
 	// loop over slice of patient image directory and do work
