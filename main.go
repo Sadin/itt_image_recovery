@@ -18,6 +18,10 @@ import (
 var (
 	// RecoveryDir directory containing images for recovery
 	RecoveryDir = "OriginalImages.XVA"
+
+	buf1, buf2 bytes.Buffer
+
+	w = io.MultiWriter(&buf1, &buf2)
 )
 
 func main() {
@@ -159,8 +163,6 @@ func execTime(start time.Time, f *os.File) {
 
 func logOutput(text string, logfile *os.File) (int, error) {
 	r := strings.NewReader(text)
-	var buf1, buf2 bytes.Buffer
-	w := io.MultiWriter(&buf1, &buf2)
 
 	if _, err := io.Copy(w, r); err != nil {
 		log.Fatal(err)
