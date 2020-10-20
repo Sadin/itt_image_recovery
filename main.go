@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -19,48 +18,67 @@ var (
 	// RecoveryDir directory containing images for recovery
 	RecoveryDir = "OriginalImages.XVA"
 
-	buf1, buf2 bytes.Buffer
-
-	w = io.MultiWriter(&buf1, &buf2)
+	InfoLogger  *log.Logger
+	WarnLogger  *log.Logger
+	ErrorLogger *log.Logger
 )
 
-func main() {
-	// begin log file
+func init() {
+	// create log file
 	t := time.Now()
 	fileName := fmt.Sprintf("ir_logs_%s.txt", t.Format("2006-01-02_15-04-05"))
-	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	check(err, f)
+	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	defer f.Close()
+	// setup multiwriter for file & console logging
+	w := io.MultiWriter(file, os.Stdout)
+
+	// init loggers
+	InfoLogger = log.New(w, "INFO:", log.LstdFlags|log.Lshortfile)
+	WarnLogger = log.New(w, "WARN:", log.LstdFlags|log.Lshortfile)
+	ErrorLogger = log.New(w, "ERRO:", log.LstdFlags|log.Lshortfile)
+}
+
+func main() {
+
+	//defer file.Close()
+	// time tracking
+	defer execTime(time.Now())
 
 	path, err := os.Getwd()
-	check(err, f)
+	// check error
 	wordPtr := flag.String("path", path, "desired file path where program will execute")
 
-	logOutput("Starting image recovery...", f)
+	InfoLogger.Println("Starting image recovery...")
 
 	flag.Parse()
 
 	// fetch user and host info
 	user, err := user.Current()
-	check(err, f)
+	if err != nil {
+		WarnLogger.Println("Unable to find user information.")
+	}
 	host, err := os.Hostname()
-	check(err, f)
+	if err != nil {
+		WarnLogger.Println("Unable to find hostname information.")
+	}
 
 	// print user/system info to console for awareness
 	info := fmt.Sprintf("Running as: \t%s (id: %s)\nHostname: \t%s\nExecuting in: \t'%s'\n", user.Username, user.Uid, host, *wordPtr)
-	logOutput(info, f)
-
-	// time tracking
-	defer execTime(time.Now(), f)
+	InfoLogger.Println(info)
 
 	// obtain slice of image directory
 	subdir, err := ioutil.ReadDir(*wordPtr)
-	check(err, f)
+	if err != nil {
+		ErrorLogger.Fatalln("Unable to obtain slice of image directory, exiting.")
+	}
 	// drill down into image directory
 	err = os.Chdir(*wordPtr)
-	check(err, f)
-	logOutput("Listing subdirectories... ", f)
+	if err != nil {
+		ErrorLogger.Fatalln("Unable to change working dir to image directory, exiting.")
+	}
 	// loop over slice of patient image directory and do work
 	for _, entry := range subdir {
 		needsaction := false
@@ -73,41 +91,54 @@ func main() {
 		}
 
 		output := fmt.Sprintf("Found %s | contains recovery images: %v", entry.Name(), needsaction)
-		logOutput(output, f)
+		InfoLogger.Println(output)
 
-		if needsaction == true {
+		if needsaction {
 			// enter patient directory
-			logOutput("Switching working directory...", f)
+			InfoLogger.Println("Switching working directory...")
 			err = os.Chdir(entry.Name())
-			check(err, f)
+			if err != nil {
+				ErrorLogger.Fatalln("Unable to change working directory, exiting.")
+			}
 
 			// scan OriginalImages dir for slice of file objects
 			imgs, err := ioutil.ReadDir(RecoveryDir)
-			check(err, f)
+			if err != nil {
+				ErrorLogger.Fatalln("Unable to obtain slice of recovery dir, exiting.")
+			}
 
 			if len(imgs) > 0 {
 				err = os.Chdir(RecoveryDir)
-				check(err, f)
+				if err != nil {
+					ErrorLogger.Fatalln("Unable to change working directory, exiting.")
+				}
 
 				// loop through OriginalImages slice
 				for _, entry := range imgs {
 					output = fmt.Sprintf("\t%s found...", entry.Name())
-					logOutput(output, f)
+					InfoLogger.Println(output)
 					// rename
 					if strings.Contains(entry.Name(), "Original") {
-						fileRename(entry.Name(), f)
+						fileRename(entry.Name())
 					}
 
 				}
 
 				err = os.Chdir("..")
-				check(err, f)
+				if err != nil {
+					ErrorLogger.Fatalln("Unable to change working directory, exiting.")
+				}
 
 				// recheck after files are moved
 				imgs, err = ioutil.ReadDir(RecoveryDir)
-				check(err, f)
+				if err != nil {
+					ErrorLogger.Fatalln("Unable to obtain slice of recovery dir, exiting.")
+				}
+
 				if len(imgs) == 0 {
-					removeDir(RecoveryDir)
+					if removeDir(RecoveryDir) != nil {
+						WarnLogger.Println("Unable to remove recovery directory.")
+					}
 				}
 
 			} else {
@@ -116,36 +147,32 @@ func main() {
 
 			// return
 			err = os.Chdir("..")
-			check(err, f)
+			// check error
 		}
 	}
 }
 
-func check(err error, f *os.File) {
-	if err != nil {
-		logOutput(err.Error(), f)
-	}
-}
-
-func fileRename(name string, f *os.File) (string, error) {
+func fileRename(name string) (string, error) {
 	// fix filename, and perform rename + move
 	newName := fmt.Sprintf("..\\%s", strings.ReplaceAll(name, " Original", ""))
 
-	fmt.Printf("\t\tRenaming & moving %s --> %s\n", name, newName)
+	InfoLogger.Printf("\t\tRenaming & moving %s --> %s\n", name, newName)
 	err := os.Rename(name, newName)
-	check(err, f)
-	fmt.Println("\t\tSuccess")
+	if err != nil {
+		ErrorLogger.Fatalln("Unable to rename image file, exiting.")
+	}
+	InfoLogger.Println("\t\tSuccess")
 
 	return newName, fmt.Errorf("Error: renaming %s failed", name)
 }
 
-func removeDir(name string) (string, error) {
-	fmt.Printf("\t%s dir empty, removing...\n", name)
+func removeDir(name string) error {
+	InfoLogger.Printf("\t%s dir empty, removing...\n", name)
 	err := os.Remove(name)
-	return "Success", err
+	return err
 }
 
-func execTime(start time.Time, f *os.File) {
+func execTime(start time.Time) {
 	elapsed := time.Since(start)
 	// Skip this function, and fetch the PC and file for its parent.
 	pc, _, _, _ := runtime.Caller(1)
@@ -157,18 +184,6 @@ func execTime(start time.Time, f *os.File) {
 	runtimeFunc := regexp.MustCompile(`^.*\.(.*)$`)
 	name := runtimeFunc.ReplaceAllString(funcObj.Name(), "$1")
 
-	logOutput(fmt.Sprintf("%s took %s", name, elapsed), f)
+	InfoLogger.Printf("%s took %s", name, elapsed)
 
-}
-
-func logOutput(text string, logfile *os.File) (int, error) {
-	r := strings.NewReader(text)
-
-	if _, err := io.Copy(w, r); err != nil {
-		log.Fatal(err)
-	}
-
-	o := fmt.Sprintf("%s\n", buf2.String())
-	fmt.Println(buf1.String())
-	return logfile.Write([]byte(o))
 }
