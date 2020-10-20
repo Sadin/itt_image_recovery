@@ -43,7 +43,6 @@ func init() {
 
 func main() {
 
-	//defer file.Close()
 	// time tracking
 	defer execTime(time.Now())
 
@@ -66,7 +65,7 @@ func main() {
 	}
 
 	// print user/system info to console for awareness
-	info := fmt.Sprintf("Running as: \t%s (id: %s)\nHostname: \t%s\nExecuting in: \t'%s'\n", user.Username, user.Uid, host, *wordPtr)
+	info := fmt.Sprintf("Running as: %s (id: %s)\tHostname: %s\tExecuting in: '%s'\t", user.Username, user.Uid, host, *wordPtr)
 	InfoLogger.Println(info)
 
 	// obtain slice of image directory
