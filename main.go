@@ -146,7 +146,9 @@ func main() {
 
 			// return
 			err = os.Chdir("..")
-			// check error
+			if err != nil {
+				ErrorLogger.Fatalln("Unable to return to patient directory, exiting.")
+			}
 		}
 	}
 }
