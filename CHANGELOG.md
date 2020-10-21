@@ -23,9 +23,9 @@
 
 ### 10/21/20 v1.1
 * performance enhancements
-    - multi writer no longer rebuilt in at every output point
+    - multi writer no longer rebuilt at every logging point point
 * error checking more robust
     - will halt execution on fatal error
-    - state of program is not known if a os.Chdir failed or filerename/move failed
+        - state of program is not known if a os.Chdir failed or filerename/move failed for example
 * custom loggers using log interface
     - Info, Warn, Error
