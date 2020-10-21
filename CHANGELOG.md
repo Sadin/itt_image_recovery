@@ -15,3 +15,17 @@
     - example: *./image_recovery -path="Z:\imaging-software\share\patientimages"*
 * performance increase
     - *string.ReplaceAll* used instead of *Strings.Replace*
+
+### 10/19/20 v1.0
+* program logs to terminal and timestamped file
+* added -path parameter
+    - defaults to current directory
+
+### 10/21/20 v1.1
+* performance enhancements
+    - multi writer no longer rebuilt in at every output point
+* error checking more robust
+    - will halt execution on fatal error
+    - state of program is not known if a os.Chdir failed or filerename/move failed
+* custom loggers using log interface
+    - Info, Warn, Error
